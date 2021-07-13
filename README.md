@@ -19,3 +19,7 @@ Este arquivo deve está no formato especificado abaixo. A aplicação será test
 
 ## Arquitetura do arquivo
 ![Trabalho T1](https://user-images.githubusercontent.com/34030150/125478611-c66b73e5-65a8-4a58-a2bb-229d6041eb6d.png)
+
+#### Observação
+
+ * Pode ficar a vontade para organizar a estrutura de arquivos e colocar um arquivo .gitignore, o professor exigiu não mexer na estrutura.
