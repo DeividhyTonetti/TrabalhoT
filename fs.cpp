@@ -43,27 +43,32 @@ void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
   char mapaBits = 0x01;
 
   int tamanhoVetorInodes = sizeof(INODE) * numInodes;
-  
+
   cout << "Tamanho do Mapa de Bits     (MB): " << tamanhoMapaBits << endl;
   cout << "Tamanho do vetor de Inodes  (VI): " << tamanhoVetorInodes << endl;
   printf("\n \n");
 
-  vetorInodes.IS_USED = 1;
+  vetorInodes.IS_USED = 1; // quando é usado e quando não é?
   vetorInodes.IS_DIR = 1;
 
-  for (int i = 0; i < sizeof(vetorInodes.NAME); i++) {
-    if(i == 0) {
+  for (int i = 0; i < sizeof(vetorInodes.NAME); i++)
+  {
+    if (i == 0)
+    {
       vetorInodes.NAME[i] = '/';
-    } else {
+    }
+    else
+    {
       vetorInodes.NAME[i] = 0;
     }
   }
 
-  vetorInodes.SIZE = sizeof('/');
+  vetorInodes.SIZE = 0;
 
-  for(int i = 0; i < sizeof(vetorInodes.DIRECT_BLOCKS); i++) {
-    vetorInodes.DIRECT_BLOCKS[i]          = 0;
-    vetorInodes.INDIRECT_BLOCKS[i]        = 0;
+  for (int i = 0; i < sizeof(vetorInodes.DIRECT_BLOCKS); i++)
+  {
+    vetorInodes.DIRECT_BLOCKS[i] = 0;
+    vetorInodes.INDIRECT_BLOCKS[i] = 0;
     vetorInodes.DOUBLE_INDIRECT_BLOCKS[i] = 0;
   }
 
@@ -79,21 +84,25 @@ void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
   {
     char complemento = 0;
 
-    fwrite(&blockSize, sizeof(char), 1, arquivo); 
+    fwrite(&blockSize, sizeof(char), 1, arquivo);
     fwrite(&numBlocks, sizeof(char), 1, arquivo);
     fwrite(&numInodes, sizeof(char), 1, arquivo);
 
     fwrite(&mapaBits, sizeof(char), 1, arquivo);
-    
-    for (int i = 0; i < tamanhoMapaBits - 1; i++) {
+
+    for (int i = 0; i < tamanhoMapaBits - 1; i++)
+    {
       fwrite(&complemento, sizeof(char), 1, arquivo);
     }
-    
-    for (int i = 0; i < tamanhoVetorInodes; i++)
+
+    for (int i = 0; i < numInodes; i++)
     {
-      if(i == 0) {
-        fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);     
-      } else {
+      if (i == 0)
+      {
+        fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);
+      }
+      else
+      {
         vetorInodes.IS_USED = 0;
         vetorInodes.IS_DIR = 0;
         vetorInodes.NAME[0] = 0;
@@ -105,10 +114,10 @@ void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
 
     fwrite(&complemento, sizeof(char), 1, arquivo);
 
-    for (int i = 0; i < tamanhoVetorBlocos - 1; i++) {
+    for (int i = 0; i < tamanhoVetorBlocos; i++)
+    {
       fwrite(&complemento, sizeof(char), 1, arquivo);
     }
-
   }
 
   fclose(arquivo);
