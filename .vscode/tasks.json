@@ -1,0 +1,57 @@
+{
+	"version": "2.0.0",
+  "tasks": [
+    {
+      "type": "cppbuild",
+      "label": "C/C++: g++ arquivo de build ativo",
+      "command": "/usr/bin/g++",
+      "args": [
+        "-g",
+        "-std=c++17",
+        "${fileDirname}/*.cpp",
+        "-o",
+        "fs.out",
+        "-lgtest",
+        "-lcrypto",
+        "-lm",
+        "-lpthread"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "dependsOn": [
+        "get bin files"
+      ],
+      "detail": "compilador: /usr/bin/g++"
+    },
+    {
+      "type": "shell",
+      "label": "get bin files",
+      "command": "cp",
+      "args": [
+				"-f",
+        "${fileDirname}/bin/{fs-case4.bin,fs-case5.bin,fs-case6.bin}",
+        "${fileDirname}"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      }
+    },
+    {
+      "type": "shell",
+      "label": "delete bin and bkp files",
+      "command": "rm",
+      "args": [
+				"${fileDirname}/*.back",
+        "${fileDirname}/*.bin",
+        "${fileDirname}/fs.out"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      }
+    }
+  ],
+}
