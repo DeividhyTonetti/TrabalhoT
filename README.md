@@ -18,4 +18,4 @@ Este arquivo deve está no formato especificado abaixo. A aplicação será test
 
 
 ## Arquitetura do arquivo
-![Screenshot](Trabalho T1.png)
+![Trabalho T1](Trabalho T1.png)
