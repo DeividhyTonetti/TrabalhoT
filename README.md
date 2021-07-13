@@ -2,7 +2,7 @@
 * Desenvolvido para a disciplina de Arquiteturas de sistemas operacionais - UFSC 
 
 * A ideia inicial é um sistema de arquivos que simula padrão EXT3. 
-O sistema deve ser foi desenvolvido em C++ utilizando o compilador GNU GCC e chamadas de sistemas do padrão POSIX. 
+O sistema foi desenvolvido em C++ utilizando o compilador GNU GCC e chamadas de sistemas do padrão POSIX. 
 
 * A tarefa imposta consiste em manipular um arquivo em disco cujo conteúdo simula um sistema de arquivo EXT3. 
 Este arquivo deve está no formato especificado abaixo. A aplicação será testada com conjunto de testes unitários disponíveis no arquivo main.cpp utilizando a biblioteca OpenSSL e Google Test.
