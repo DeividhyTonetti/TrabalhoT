@@ -89,7 +89,7 @@ void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
       fwrite(&complemento, sizeof(char), 1, arquivo);
     }
     
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < tamanhoVetorInodes; i++)
     {
       if(i == 0) {
         fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);     
@@ -97,15 +97,16 @@ void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
         vetorInodes.IS_USED = 0;
         vetorInodes.IS_DIR = 0;
         vetorInodes.NAME[0] = 0;
-        vetorInodes.SIZE = sizeof(char);
+        vetorInodes.SIZE = 0;
 
         fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);
       }
     }
 
-    
+    fwrite(&complemento, sizeof(char), 1, arquivo);
+
     for (int i = 0; i < tamanhoVetorBlocos - 1; i++) {
-      // fwrite(&complemento, sizeof(char), 1, arquivo);
+      fwrite(&complemento, sizeof(char), 1, arquivo);
     }
 
   }
