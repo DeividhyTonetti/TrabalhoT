@@ -15,3 +15,7 @@ Este arquivo deve está no formato especificado abaixo. A aplicação será test
 3º- Compile os arquivos main.cpp e fs.cpp com o seguinte comando **g++ main.cpp fs.cpp -o main -lpthread**
 
 4º- Rode o arquivo main.
+
+
+## Arquitetura do arquivo
+![Screenshot](Trabalho T1.png)
