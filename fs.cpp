@@ -39,7 +39,7 @@ void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
   FILE *arquivo = fopen(fsFileName.c_str(), "w+b"); // Leitura do arquivo
   INODE vetorInodes;
 
-  int tamanhoMapaBits = ceil(numBlocks / 8); // 4 bytes para representar 32 blocos
+  int tamanhoMapaBits = ceil( ((float) numBlocks) / 8); // 4 bytes para representar 32 blocos
   char mapaBits = 0x01;
 
   int tamanhoVetorInodes = sizeof(INODE) * numInodes;
