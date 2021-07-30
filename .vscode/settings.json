@@ -46,7 +46,15 @@
     "xstddef": "cpp",
     "xstring": "cpp",
     "xtr1common": "cpp",
-    "xutility": "cpp"
+    "xutility": "cpp",
+    "atomic": "cpp",
+    "bit": "cpp",
+    "cctype": "cpp",
+    "clocale": "cpp",
+    "compare": "cpp",
+    "concepts": "cpp",
+    "ctime": "cpp",
+    "iterator": "cpp"
   },
   "idf.espIdfPathWin": "C:\\Users\\H4k3r\\esp\\esp-idf",
   "idf.pythonBinPathWin": "C:\\Users\\H4k3r\\.espressif\\python_env\\idf4.3_py3.6_env\\Scripts\\python.exe",

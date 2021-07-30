@@ -15,17 +15,6 @@
 
 using namespace std;
 
-/*
-    -> Tamanho dos blocos (T)   : char 1 byte - 8 bits;               -> OK (blockSize)
-    -> Número de blocos   (N)   : char 1 byte - 8 bits;               -> OK (numBlocks)
-    -> Número de Inodes   (I)   : char 1 byte - 8 bits;               -> OK (numInodes)
-    -> Mapa de Bits             : char 1 bit por bloco { ceil(N/8) }; -> OK (vetorMapaBits)
-    -> Vetor de Inodes          : char { sizeof(inode) * I };         -> NO (vetorInodes)
-    -> Indice do Inode Dir Raiz : char 1 byte - 8 bits;               -> NO ("/")
-    -> Vetor de Blocos          : char { T * N };                     -> NO ()
-    
-*/
-
 void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
 {
 
@@ -39,7 +28,7 @@ void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
   FILE *arquivo = fopen(fsFileName.c_str(), "w+b"); // Leitura do arquivo
   INODE vetorInodes;
 
-  int tamanhoMapaBits = ceil( ((float) numBlocks) / 8); // 4 bytes para representar 32 blocos
+  int tamanhoMapaBits = ceil(((float)numBlocks) / 8); // 4 bytes para representar 32 blocos
   char mapaBits = 0x01;
 
   int tamanhoVetorInodes = sizeof(INODE) * numInodes;
@@ -123,8 +112,108 @@ void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
   fclose(arquivo);
 }
 
-void addFile(std::string fsFileName, std::string filePath, std::string fileContent)
+void addFile(string fsFileName, string filePath, string fileContent)
 {
+  FILE *arquivo = fopen(fsFileName.c_str(), "r+b");
+  
+  typedef struct
+  {
+    int TAMANHO_BLOCOS; 
+    int NUM_BLOCOS;  
+    int NUM_INODES;         
+  } CARACTER;
+
+
+  if (arquivo == NULL)
+  {
+    cout << "Erro ao abrir o arquivo!" << arquivo << endl;
+    system("pause");
+    exit(1);
+  }
+  else 
+  {
+    char buffer[10];
+    int posicaoInodes;
+
+    CARACTER novoModelo;
+    INODE vetorInodes;
+
+    fseek(arquivo, 0, SEEK_SET); 
+    fread(buffer, sizeof(char), 3, arquivo); // 1 por 1
+
+    // Pego os 3 primeiros bytes do arquivo (char -> 8 bits)
+    novoModelo.TAMANHO_BLOCOS = buffer[0]; 
+    novoModelo.NUM_BLOCOS     = buffer[1];
+    novoModelo.NUM_INODES     = buffer[2];
+
+    int tamanhoMapaBits    = ceil(((float) novoModelo.NUM_BLOCOS) / 8);
+    int tamanhoVetorBlocos = novoModelo.TAMANHO_BLOCOS * novoModelo.NUM_BLOCOS;
+    int tamanhoVetorInodes = sizeof(INODE) * novoModelo.NUM_INODES;
+
+// Vou desolocar 4 bytes (TamBlocos, numBlocos, NumInodes, mapaBits)
+    fseek(arquivo, 4, SEEK_SET);
+// Quantos Inodes eu tenho? - 132
+
+    filePath.erase(0, 1);
+// Qual Inode está ocupado
+    for (int i = 0; i < novoModelo.NUM_INODES; i++)
+    {
+      char valorInode;
+      fread(&valorInode, sizeof(vetorInodes), 1, arquivo);
+
+      if (!valorInode) 
+      {
+        vetorInodes.IS_USED = 0x01;
+        vetorInodes.IS_DIR = 0x00;
+
+        strcpy(vetorInodes.NAME, filePath.c_str());
+        
+        vetorInodes.SIZE = 0x00;
+        vetorInodes.DIRECT_BLOCKS[0] = 0;
+        vetorInodes.INDIRECT_BLOCKS[0] = 0;
+        vetorInodes.DOUBLE_INDIRECT_BLOCKS[0] = 0;
+
+        fseek(arquivo, -sizeof(vetorInodes), SEEK_CUR);
+        fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);
+
+        printf("Antes: %x \n", ftell(arquivo));
+
+        while(i < novoModelo.NUM_INODES - 1) {
+          printf("No while: %x \n", ftell(arquivo));
+          fread(&valorInode, sizeof(vetorInodes), 1, arquivo);
+          i++;
+        }
+
+        printf("Depois: %x \n", ftell(arquivo));
+
+        int pastaRaiz = 0x01;
+        fwrite(&pastaRaiz, sizeof(char), 1, arquivo);
+        fwrite(&fileContent, sizeof(char), novoModelo.TAMANHO_BLOCOS, arquivo);
+
+        break;
+      }
+
+
+    }
+    
+    // cout << "------------------------ Parametros iniciais ------------------" << endl << endl;
+    // cout << "Nome do Arquivo:            " << fsFileName << endl;
+    // cout << "Nome da Pasta:              " << filePath << endl;
+    // cout << "Conteudo:                   " << fileContent << endl;
+    // cout << "Tamanho do Mapa de BITS:    " << tamanhoMapaBits << endl;
+    // cout << "Tamanho do vetor de Blocos: " << tamanhoVetorBlocos << endl;
+    // cout << "Tamanho do vetor de Inodes: " << tamanhoVetorInodes << endl;
+    // cout << "Tamanho do Inode:           " << sizeof(vetorInodes) << endl << endl;
+    // // cout << "Posicao do InodeLivre:      " << posicaoInodeLivre << endl << endl;
+    // cout << "--------------------------------------------------------------" << endl << endl;
+
+    // cout << "------------------------ Primeiros 3 bytes --------------------" << endl << endl;
+    // cout << "Tamanho dos blocos: " << novoModelo.TAMANHO_BLOCOS << endl;
+    // cout << "Numero de blocos:   " << novoModelo.NUM_BLOCOS << endl;
+    // cout << "Numero de Inodes:   " << novoModelo.NUM_INODES << endl << endl;
+    // cout << "--------------------------------------------------------------" << endl;
+    
+  }
 }
 
 void addDir(std::string fsFileName, std::string dirPath)

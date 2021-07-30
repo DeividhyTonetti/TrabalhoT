@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string.h>
 
+
 #include "fs.h"
 using namespace std;
 // void duplicate(std::string fsrc, std::string fdest)
@@ -114,6 +115,12 @@ int main(int argc, char **argv)
 {
     //   testing::InitGoogleTest(&argc, argv);
     //   return RUN_ALL_TESTS();
-    initFs("fs-meu.bin", 2, 10, 5);
+    // initFs("fs-meu.bin", 2, 8, 6);
+    addFile("fs-meu.bin", "/teste.txt", "OlaMundo");
     return 0;
 }
+
+// achar inode não utilizado, então coloca os daos do inode (nome do arquivo, tamanho dele)
+// ai vai ter que encontrar os bloc( sai varendo o mapa de bit até encontrar o nulo, então seta o bit como utilizado, vai n oinode e coloca o conteudo na região de blocos)
+// precisa atualiza o pai do Inode (Vai no dir pai e incrmenta o tamanho dele, e vai na região de blocos e coloca o indice do inode que inclui no novo arquivo) 
+// Olhar o slide 3, tem um byte que é separado (como é enumerado)
