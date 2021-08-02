@@ -172,7 +172,7 @@ void addFile(string fsFileName, string filePath, string fileContent)
         vetorInodes.INDIRECT_BLOCKS[0] = 0;
         vetorInodes.DOUBLE_INDIRECT_BLOCKS[0] = 0;
 
-        fseek(arquivo, -sizeof(vetorInodes), SEEK_CUR);
+        fseek(arquivo, 4 + sizeof(vetorInodes), SEEK_SET);
         fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);
 
         while(i < novoModelo.NUM_INODES - 1) {
@@ -198,9 +198,13 @@ void addFile(string fsFileName, string filePath, string fileContent)
         }
 
         float writeBlock = sizeof(filePath) / tamanhoVetorBlocos;    
-        char conteudo[fileContent.length()];
         
+        char conteudo[fileContent.length()]; 
         strcpy(conteudo, fileContent.c_str());
+
+        cout<< "Teste Conteudo: " << conteudo << endl;
+        
+        // int certo = fwrite(conteudo, sizeof(char), 3, arquivo);
 
         for(int j = 0; j <= bl; j++) 
         {
@@ -211,7 +215,7 @@ void addFile(string fsFileName, string filePath, string fileContent)
             fread(buffer, novoModelo.TAMANHO_BLOCOS, 1, arquivo);
             fseek(arquivo, -novoModelo.TAMANHO_BLOCOS, SEEK_CUR);
 
-            somaFilho = buffer[0] + 1;
+            somaFilho = buffer[0] + 1; // Não funciona - Tem que generalizar 
             fwrite(&somaFilho, sizeof(char) * novoModelo.TAMANHO_BLOCOS, 1, arquivo);
             fseek(arquivo, -novoModelo.TAMANHO_BLOCOS, SEEK_CUR);
             // printf("POsicao4: %x \n", ftell(arquivo)); //ok
@@ -220,16 +224,16 @@ void addFile(string fsFileName, string filePath, string fileContent)
           if(j == bl) 
           {
             // printf("POsicao5: %x \n", ftell(arquivo));
-            for (int k = 0; k < fileContent.length(); k++)
-            {
-              cout << "ENTREI: " << conteudo[k] << endl;
-               printf("POsicao6: %x \n", ftell(arquivo));
-              int certo = fwrite(&conteudo[k], sizeof(char), 1, arquivo); // PORQUE ELE NÃo Está incluindo?
+            // for (int k = 0; k < fileContent.length(); k++)
+            // {
+              // cout << "ENTREI: " << conteudo[k] << endl;
+              printf("POsicao6: %x \n", ftell(arquivo));
+              int certo = fwrite(conteudo, sizeof(char), 3, arquivo); // PORQUE ELE NÃo Está incluindo?
                
               cout << "Certo: " << certo << endl;
                
                printf("POsicao7: %x \n", ftell(arquivo));
-            }
+            // }
           }
 
           fread(buffer, novoModelo.TAMANHO_BLOCOS, 1, arquivo);
@@ -237,23 +241,23 @@ void addFile(string fsFileName, string filePath, string fileContent)
 
         fseek(arquivo, inicioBloco, SEEK_SET);
 
-        bitset<8> bset;
+        // bitset<8> bset;
 
-        for (int k = 0; k < novoModelo.NUM_BLOCOS; k++)
-        {
-          fread(buffer, novoModelo.TAMANHO_BLOCOS, 1, arquivo);
+        // for (int k = 0; k < novoModelo.NUM_BLOCOS; k++)
+        // {
+        //   fread(buffer, novoModelo.TAMANHO_BLOCOS, 1, arquivo);
 
-          if(buffer[0] != 0) {
-            bset[k] = 1;
-          }
-        }
+        //   if(buffer[0] != 0) {
+        //     bset[k] = 1;
+        //   }
+        // }
 
-        int decimal = bset.to_ulong();
+        // int decimal = bset.to_ulong();
 
-        cout << decimal;
-        fseek(arquivo, sizeof(int), SEEK_SET);
-        fwrite(&decimal, sizeof(char), 1, arquivo);
+        // fseek(arquivo, sizeof(int), SEEK_SET);
+        // fwrite(&decimal, sizeof(char), 1, arquivo);
 
+        fclose(arquivo);
         break;
       }
     }  
