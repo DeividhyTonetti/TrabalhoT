@@ -117,13 +117,10 @@ void addFile(string fsFileName, string filePath, string fileContent)
 {
   FILE *arquivo = fopen(fsFileName.c_str(), "r+b");
   
-  typedef struct
-  {
-    int TAMANHO_BLOCOS; 
-    int NUM_BLOCOS;  
-    int NUM_INODES; 
-    int MAPA_BITS;        
-  } CARACTER;
+  int TAMANHO_BLOCOS; 
+  int NUM_BLOCOS;  
+  int NUM_INODES; 
+  int MAPA_BITS;        
 
   if (arquivo == NULL)
   {
@@ -136,26 +133,34 @@ void addFile(string fsFileName, string filePath, string fileContent)
     char buffer[10];
     int posicaoInodes;
 
-    CARACTER novoModelo;
     INODE vetorInodes;
 
     fseek(arquivo, 0, SEEK_SET); 
     fread(buffer, sizeof(char), 4, arquivo);
 
-    novoModelo.TAMANHO_BLOCOS = buffer[0]; 
-    novoModelo.NUM_BLOCOS     = buffer[1];
-    novoModelo.NUM_INODES     = buffer[2];
-    novoModelo.MAPA_BITS      = buffer[3];
+    TAMANHO_BLOCOS = buffer[0]; 
+    NUM_BLOCOS     = buffer[1];
+    NUM_INODES     = buffer[2];
+    MAPA_BITS      = buffer[3];
 
-    int tamanhoMapaBits    = ceil(((float) novoModelo.NUM_BLOCOS) / 8);
-    int tamanhoVetorBlocos = novoModelo.TAMANHO_BLOCOS * novoModelo.NUM_BLOCOS;
-    int tamanhoVetorInodes = sizeof(INODE) * novoModelo.NUM_INODES;
+    int tamanhoMapaBits    = ceil(((float) NUM_BLOCOS) / 8);
+    int tamanhoVetorBlocos = TAMANHO_BLOCOS * NUM_BLOCOS;
+    int tamanhoVetorInodes = sizeof(INODE) * NUM_INODES;
+
+    int qtdInodesLivres;
+    char disponivel;
 
     fseek(arquivo, 4, SEEK_SET);
 
     filePath.erase(0, 1);
 
-    for (int i = 0; i < novoModelo.NUM_INODES; i++)
+    int tamanhoConteudo = fileContent.length();
+
+    char conteudo[tamanhoConteudo]; 
+    strcpy(conteudo, fileContent.c_str());
+
+    // INCLUSÃO do INODE
+    for (int i = 0; i < NUM_INODES; i++)
     {
       char valorInode;
       fread(&valorInode, sizeof(vetorInodes), 1, arquivo);
@@ -167,100 +172,105 @@ void addFile(string fsFileName, string filePath, string fileContent)
 
         strcpy(vetorInodes.NAME, filePath.c_str());
         
-        vetorInodes.SIZE = fileContent.length();
-        vetorInodes.DIRECT_BLOCKS[0] = 0;
-        vetorInodes.INDIRECT_BLOCKS[0] = 0;
-        vetorInodes.DOUBLE_INDIRECT_BLOCKS[0] = 0;
+        vetorInodes.SIZE = tamanhoConteudo;
+
+        for(int i = 0; i < 3; i++) {
+          vetorInodes.DIRECT_BLOCKS[i] = 0; 
+          vetorInodes.INDIRECT_BLOCKS[i] = 0;
+          vetorInodes.DOUBLE_INDIRECT_BLOCKS[i] = 0;
+        }
 
         fseek(arquivo, 4 + sizeof(vetorInodes), SEEK_SET);
         fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);
 
-        while(i < novoModelo.NUM_INODES - 1) {
+        while(i < NUM_INODES - 1) {
           fread(&valorInode, sizeof(vetorInodes), 1, arquivo);
           i++;
         }
 
-        int pastaRaiz = 0x00;
-        fwrite(&pastaRaiz, sizeof(char), 1, arquivo);
-
-        int inicioBloco = ftell(arquivo);
-        int bl = -1;
-
-        for (int j = 7; j >= 0; j--)
-        {
-          float depara = novoModelo.MAPA_BITS - pow(2.0, j);
-
-          if(depara < 0) {
-            bl = j;
-          } else {
-            novoModelo.MAPA_BITS -= pow(2.0, j);
-          }
-        }
-
-        float writeBlock = sizeof(filePath) / tamanhoVetorBlocos;    
-        
-        char conteudo[fileContent.length()]; 
-        strcpy(conteudo, fileContent.c_str());
-
-        cout<< "Teste Conteudo: " << conteudo << endl;
-        
-        // int certo = fwrite(conteudo, sizeof(char), 3, arquivo);
-
-        for(int j = 0; j <= bl; j++) 
-        {
-          if(j == 0)
-          {
-            int somaFilho;
-
-            fread(buffer, novoModelo.TAMANHO_BLOCOS, 1, arquivo);
-            fseek(arquivo, -novoModelo.TAMANHO_BLOCOS, SEEK_CUR);
-
-            somaFilho = buffer[0] + 1; // Não funciona - Tem que generalizar 
-            fwrite(&somaFilho, sizeof(char) * novoModelo.TAMANHO_BLOCOS, 1, arquivo);
-            fseek(arquivo, -novoModelo.TAMANHO_BLOCOS, SEEK_CUR);
-            // printf("POsicao4: %x \n", ftell(arquivo)); //ok
-          }
-
-          if(j == bl) 
-          {
-            // printf("POsicao5: %x \n", ftell(arquivo));
-            // for (int k = 0; k < fileContent.length(); k++)
-            // {
-              // cout << "ENTREI: " << conteudo[k] << endl;
-              printf("POsicao6: %x \n", ftell(arquivo));
-              int certo = fwrite(conteudo, sizeof(char), 3, arquivo); // PORQUE ELE NÃo Está incluindo?
-               
-              cout << "Certo: " << certo << endl;
-               
-               printf("POsicao7: %x \n", ftell(arquivo));
-            // }
-          }
-
-          fread(buffer, novoModelo.TAMANHO_BLOCOS, 1, arquivo);
-        }
-
-        fseek(arquivo, inicioBloco, SEEK_SET);
-
-        // bitset<8> bset;
-
-        // for (int k = 0; k < novoModelo.NUM_BLOCOS; k++)
-        // {
-        //   fread(buffer, novoModelo.TAMANHO_BLOCOS, 1, arquivo);
-
-        //   if(buffer[0] != 0) {
-        //     bset[k] = 1;
-        //   }
-        // }
-
-        // int decimal = bset.to_ulong();
-
-        // fseek(arquivo, sizeof(int), SEEK_SET);
-        // fwrite(&decimal, sizeof(char), 1, arquivo);
-
-        fclose(arquivo);
         break;
       }
-    }  
+    }
+
+    char vazio = 0x00;
+
+    fwrite(&vazio, sizeof(char), 1, arquivo);
+    
+    // VERIFICAÇÃO DO MAPA DE BITS, QUAL BLOCO ESTÁ LIVRE!
+    int bl = -1;
+    for (int i = 7; i >= 0; i--)
+    {
+      float depara = MAPA_BITS - pow(2.0, i);
+
+      if(depara < 0) {
+        bl = i;
+      } else {
+        MAPA_BITS -= pow(2.0, i);
+      }
+    }
+
+   // INCLUSÃO DE DADOS NOS BLOCOS DE ACORDO COM O INODE LIVRE
+    for(int i = 0; i <= bl; i++) 
+    {
+      if(i == bl) 
+      {
+        fwrite(conteudo, sizeof(char), tamanhoConteudo, arquivo);
+        break;
+      }
+
+      fread(buffer, TAMANHO_BLOCOS, 1, arquivo);
+    }
+
+    fseek(arquivo, 3, SEEK_SET);
+
+    int novoMapaBits = ceil(((float) tamanhoConteudo / TAMANHO_BLOCOS));
+   
+    bitset<8> bset;
+    bset[0] = 1;
+
+    for(int i = 1; i <= novoMapaBits; i++) 
+    {
+      bset[i] = 1;
+    }
+
+    novoMapaBits = bset.to_ulong();
+
+    fwrite(&novoMapaBits, sizeof(char), 1, arquivo);
+     
+    int tamanhoAtualPai;
+    
+    fseek(arquivo, 12, SEEK_CUR);
+
+    fread(&tamanhoAtualPai, sizeof(char), 1, arquivo);
+    fseek(arquivo, 16, SEEK_SET);
+
+    tamanhoAtualPai += 1;
+
+    fwrite(&tamanhoAtualPai, sizeof(char), 1, arquivo);
+
+    fseek(arquivo, 4 + sizeof(vetorInodes) + 13, SEEK_SET);
+    
+    int novoIndice = ceil(((float) tamanhoConteudo / TAMANHO_BLOCOS));
+
+    for(int i = 1; i <= novoIndice; i++) {
+      fwrite(&i, sizeof(char), 1, arquivo);
+    }
+
+    fseek(arquivo, 7, SEEK_CUR);
+    printf("POsicao1: %x \n", ftell(arquivo));
+
+    cout<< "NUm inodes: " << NUM_INODES << endl;
+
+    for(int i = 0; i < NUM_INODES - 1 - bl; i++) {
+      fread(&vazio, sizeof(vetorInodes), 1, arquivo);
+    }
+
+    printf("POsicao2: %x - BL: %d \n", ftell(arquivo), bl);
+    int teste = fwrite(&bl, sizeof(char), 1, arquivo);
+
+    printf("POsicao2: %x - TESTE: %d \n", ftell(arquivo), teste);
+    // bl
+    fclose(arquivo);  
   }
 }
 
