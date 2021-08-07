@@ -11,20 +11,39 @@
 #include <math.h>
 #include <string.h>
 #include <bitset>
+#include <sstream>
+#include <vector>
 
 #include "fs.h"
 
 using namespace std;
 
+vector<string> split(const string &s, char delim)
+{
+  vector<string> result;
+  stringstream ss(s);
+  string item;
+
+  while (getline(ss, item, delim))
+  {
+    if (!item.empty())
+    {
+      result.push_back(item);
+    }
+  }
+
+  return result;
+}
+
 void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
 {
 
-  printf("\n \n");
+  // printf("\n \n");
 
-  cout << "Nome: " << fsFileName << endl;
-  cout << "Tamanho dos blocos          (T): " << blockSize << endl;
-  cout << "Numero de blocos            (N): " << numBlocks << endl;
-  cout << "Numero de Inodes            (I): " << numInodes << endl;
+  // cout << "Nome: " << fsFileName << endl;
+  // cout << "Tamanho dos blocos          (T): " << blockSize << endl;
+  // cout << "Numero de blocos            (N): " << numBlocks << endl;
+  // cout << "Numero de Inodes            (I): " << numInodes << endl;
 
   FILE *arquivo = fopen(fsFileName.c_str(), "w+b");
   INODE vetorInodes;
@@ -34,9 +53,9 @@ void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
 
   int tamanhoVetorInodes = sizeof(INODE) * numInodes;
 
-  cout << "Tamanho do Mapa de Bits     (MB): " << tamanhoMapaBits << endl;
-  cout << "Tamanho do vetor de Inodes  (VI): " << tamanhoVetorInodes << endl;
-  printf("\n \n");
+  // cout << "Tamanho do Mapa de Bits     (MB): " << tamanhoMapaBits << endl;
+  // cout << "Tamanho do vetor de Inodes  (VI): " << tamanhoVetorInodes << endl;
+  // printf("\n \n");
 
   vetorInodes.IS_USED = 1;
   vetorInodes.IS_DIR = 1;
@@ -66,7 +85,7 @@ void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
 
   if (arquivo == NULL)
   {
-    cout << "Erro ao abrir o arquivo!" << arquivo << endl;
+    // cout << "Erro ao abrir o arquivo!" << arquivo << endl;
     system("pause");
     exit(1);
   }
@@ -116,166 +135,520 @@ void initFs(string fsFileName, int blockSize, int numBlocks, int numInodes)
 void addFile(string fsFileName, string filePath, string fileContent)
 {
   FILE *arquivo = fopen(fsFileName.c_str(), "r+b");
-  
-  int TAMANHO_BLOCOS; 
-  int NUM_BLOCOS;  
-  int NUM_INODES; 
-  int MAPA_BITS;        
+
+  int TAMANHO_BLOCOS;
+  int NUM_BLOCOS;
+  int NUM_INODES;
+  int MAPA_BITS;
 
   if (arquivo == NULL)
   {
-    cout << "Erro ao abrir o arquivo!" << arquivo << endl;
+    // cout << "Erro ao abrir o arquivo!" << arquivo << endl;
     system("pause");
     exit(1);
   }
-  else 
+  else
   {
     char buffer[10];
-    int posicaoInodes;
+    char dir[10];
+    int posicaoInodePai = 0;
 
     INODE vetorInodes;
 
-    fseek(arquivo, 0, SEEK_SET); 
+    fseek(arquivo, 0, SEEK_SET);
     fread(buffer, sizeof(char), 4, arquivo);
 
-    TAMANHO_BLOCOS = buffer[0]; 
-    NUM_BLOCOS     = buffer[1];
-    NUM_INODES     = buffer[2];
-    MAPA_BITS      = buffer[3];
+    TAMANHO_BLOCOS = buffer[0];
+    NUM_BLOCOS = buffer[1];
+    NUM_INODES = buffer[2];
+    MAPA_BITS = buffer[3];
 
-    int tamanhoMapaBits    = ceil(((float) NUM_BLOCOS) / 8);
+    int tamanhoMapaBits = ceil(((float)NUM_BLOCOS) / 8);
     int tamanhoVetorBlocos = TAMANHO_BLOCOS * NUM_BLOCOS;
     int tamanhoVetorInodes = sizeof(INODE) * NUM_INODES;
 
-    int qtdInodesLivres;
-    char disponivel;
-
-    fseek(arquivo, 4, SEEK_SET);
-
-    filePath.erase(0, 1);
+    int comecaInodes = 3 + tamanhoMapaBits;
+    int comecaBlocos = 1 + comecaInodes + NUM_INODES * sizeof(vetorInodes);
 
     int tamanhoConteudo = fileContent.length();
-
-    char conteudo[tamanhoConteudo]; 
+    char conteudo[tamanhoConteudo];
     strcpy(conteudo, fileContent.c_str());
 
-    // INCLUSÃO do INODE
-    for (int i = 0; i < NUM_INODES; i++)
+    int indiceInodeLivre;
+    int indiceBlocoPai;
+
+    string inodePaiString;
+
+    // cout << "Tamanho dos Blocos:          " << TAMANHO_BLOCOS << endl;
+    // cout << "Numero de Blocos:            " << NUM_BLOCOS << endl;
+    // cout << "Numero de Inodes:            " << NUM_INODES << endl;
+    // cout << "Mapa de Bits:                " << MAPA_BITS << endl;
+    // cout << "Tamanho do Mapa de Bits:     " << tamanhoMapaBits << endl;
+    // cout << "Tamanho do vetor de blocos:  " << tamanhoVetorBlocos << endl;
+    // cout << "Tamanho do vetor de Inodes:  " << tamanhoVetorInodes << endl
+    //      << endl;
+
+    // printf("Comeca Inodes: %x \n", comecaInodes);
+    // printf("Comeca blocos: %x \n\n", comecaBlocos);
+
+    // cout << "Tamanho do Conteudo:  " << tamanhoConteudo << endl;
+    // cout << "Conteudo:             " << conteudo << endl << endl;
+
+    vector<string> stringSeparada = split(filePath, '/');
+
+    int tamanhoArray = stringSeparada.size();
+
+    if (tamanhoArray == 1)
     {
-      char valorInode;
-      fread(&valorInode, sizeof(vetorInodes), 1, arquivo);
-
-      if (!valorInode) 
+      inodePaiString = '/';
+    }
+    else
+    {
+      for (int i = 0; i < tamanhoArray - 1; i++)
       {
-        vetorInodes.IS_USED = 0x01;
-        vetorInodes.IS_DIR = 0x00;
-
-        strcpy(vetorInodes.NAME, filePath.c_str());
-        
-        vetorInodes.SIZE = tamanhoConteudo;
-
-        for(int i = 0; i < 3; i++) {
-          vetorInodes.DIRECT_BLOCKS[i] = 0; 
-          vetorInodes.INDIRECT_BLOCKS[i] = 0;
-          vetorInodes.DOUBLE_INDIRECT_BLOCKS[i] = 0;
-        }
-
-        fseek(arquivo, 4 + sizeof(vetorInodes), SEEK_SET);
-        fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);
-
-        while(i < NUM_INODES - 1) {
-          fread(&valorInode, sizeof(vetorInodes), 1, arquivo);
-          i++;
-        }
-
-        break;
+        inodePaiString = stringSeparada[i];
       }
     }
 
-    char vazio = 0x00;
+    for (int i = 0; i < NUM_INODES; i++)
+    {
+      char ativo;
+      fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+      fread(&ativo, sizeof(char), 1, arquivo);
 
-    fwrite(&vazio, sizeof(char), 1, arquivo);
-    
+      if (ativo)
+      {
+        char valor[10];
+
+        fseek(arquivo, ftell(arquivo) + 1, SEEK_SET);
+        fread(&valor, sizeof(char), 10, arquivo);
+
+        string aux;
+        stringstream ss;
+
+        ss.str(valor);
+        aux = ss.str();
+
+        int res = aux.compare(inodePaiString);
+
+        if (res == 0)
+        {
+          posicaoInodePai = i;
+          break;
+        }
+      }
+    }
+
     // VERIFICAÇÃO DO MAPA DE BITS, QUAL BLOCO ESTÁ LIVRE!
     int bl = -1;
     for (int i = 7; i >= 0; i--)
     {
       float depara = MAPA_BITS - pow(2.0, i);
 
-      if(depara < 0) {
+      if (depara < 0)
+      {
         bl = i;
-      } else {
+      }
+      else
+      {
         MAPA_BITS -= pow(2.0, i);
       }
     }
 
-   // INCLUSÃO DE DADOS NOS BLOCOS DE ACORDO COM O INODE LIVRE
-    for(int i = 0; i <= bl; i++) 
+    filePath.erase(0, 1);
+    // INCLUSÃO do INODE
+    for (int i = 0; i < NUM_INODES; i++)
     {
-      if(i == bl) 
+      char valorInode;
+      fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+      fread(&valorInode, sizeof(vetorInodes), 1, arquivo);
+
+      if (!valorInode)
       {
-        fwrite(conteudo, sizeof(char), tamanhoConteudo, arquivo);
+        vetorInodes.IS_USED = 0x01;
+        vetorInodes.IS_DIR = 0x00;
+
+        strcpy(vetorInodes.NAME, filePath.c_str());
+
+        vetorInodes.SIZE = tamanhoConteudo;
+
+        for (int i = 0; i < 3; i++)
+        {
+          vetorInodes.DIRECT_BLOCKS[i] = 0; // aqui eu já devo colocar os blocos diretos?
+          vetorInodes.INDIRECT_BLOCKS[i] = 0;
+          vetorInodes.DOUBLE_INDIRECT_BLOCKS[i] = 0;
+        }
+
+        fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+        fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);
+
+        indiceInodeLivre = i;
+        // cout << "LIVRE: " << indiceInodeLivre << endl;
         break;
       }
-
-      fread(buffer, TAMANHO_BLOCOS, 1, arquivo);
     }
+
+    for (int i = 0; i < NUM_INODES; i++)
+    {
+      if (i == posicaoInodePai)
+      {
+        // char casting[] = (char) indiceInodeLivre;
+
+        // cout << "ENTREI AQUI: " << casting << endl;
+        fseek(arquivo, comecaInodes + i * sizeof(INODE) + 12, SEEK_SET);
+        fwrite(&indiceInodeLivre, sizeof(char), 1, arquivo);
+
+        char toInt;
+
+        fread(&toInt, sizeof(char), 1, arquivo);
+
+        indiceBlocoPai = (int)toInt;
+
+        break;
+      }
+    }
+
+    for (int i = 0; i < NUM_BLOCOS; i++) // tá errado
+    {
+      for (int j = 0; j < TAMANHO_BLOCOS; j++)
+      {
+        if (i == indiceBlocoPai)
+        {
+          char ocupado;
+
+          fseek(arquivo, comecaBlocos + (TAMANHO_BLOCOS * indiceBlocoPai), SEEK_SET);
+          fread(&ocupado, sizeof(vetorInodes), 1, arquivo);
+
+          int casting = (int)ocupado;
+
+          if (casting == 0)
+          {
+
+            fseek(arquivo, comecaBlocos + (TAMANHO_BLOCOS * indiceBlocoPai), SEEK_SET);
+            fwrite(&indiceInodeLivre, sizeof(char), 1, arquivo);
+          }
+        }
+
+        if (i == bl)
+        {
+          fseek(arquivo, comecaBlocos + (TAMANHO_BLOCOS * bl), SEEK_SET);
+          fwrite(&conteudo, sizeof(char), tamanhoConteudo, arquivo);
+        }
+      }
+    }
+
+    int tamanhoNovoMapa = ceil(((float)tamanhoConteudo / TAMANHO_BLOCOS));
+    int somador = 0;
+
+    for (int i = 0; i <= tamanhoNovoMapa; i++)
+    {
+      somador += pow(2.0, i);
+    }
+
+    char somadorCast = (char)somador;
 
     fseek(arquivo, 3, SEEK_SET);
+    fwrite(&somadorCast, sizeof(char), 1, arquivo);
 
-    int novoMapaBits = ceil(((float) tamanhoConteudo / TAMANHO_BLOCOS));
-   
-    bitset<8> bset;
-    bset[0] = 1;
+    int contador = 0;
 
-    for(int i = 1; i <= novoMapaBits; i++) 
+    for (int i = 0; i < NUM_BLOCOS; i++)
     {
-      bset[i] = 1;
+      char ocupado;
+
+      fseek(arquivo, comecaBlocos + (TAMANHO_BLOCOS * i) + 2, SEEK_SET);
+      fread(&ocupado, sizeof(char), TAMANHO_BLOCOS, arquivo);
+
+      if (ocupado != 0)
+      {
+        // printf("POsicao2: %x \n", ftell(arquivo));
+        contador++;
+      }
     }
 
-    novoMapaBits = bset.to_ulong();
+    for (int i = 0; i < NUM_INODES; i++)
+    {
+      fseek(arquivo, comecaInodes + indiceInodeLivre * sizeof(INODE) + 13, SEEK_SET);
 
-    fwrite(&novoMapaBits, sizeof(char), 1, arquivo);
-     
-    int tamanhoAtualPai;
-    
-    fseek(arquivo, 12, SEEK_CUR);
-
-    fread(&tamanhoAtualPai, sizeof(char), 1, arquivo);
-    fseek(arquivo, 16, SEEK_SET);
-
-    tamanhoAtualPai += 1;
-
-    fwrite(&tamanhoAtualPai, sizeof(char), 1, arquivo);
-
-    fseek(arquivo, 4 + sizeof(vetorInodes) + 13, SEEK_SET);
-    
-    int novoIndice = ceil(((float) tamanhoConteudo / TAMANHO_BLOCOS));
-
-    for(int i = 1; i <= novoIndice; i++) {
-      fwrite(&i, sizeof(char), 1, arquivo);
+      for (int j = 1; j <= contador; j++)
+      {
+        fwrite(&j, sizeof(char), 1, arquivo);
+      }
     }
 
-    fseek(arquivo, 7, SEEK_CUR);
-    printf("POsicao1: %x \n", ftell(arquivo));
+    // cout << "InodePaiString: "<< inodePaiString << endl;
+    // cout << "InodePaiPosition: "<< posicaoInodePai << endl;
+    // cout << "Contador: "<< contador << endl;
 
-    cout<< "NUm inodes: " << NUM_INODES << endl;
-
-    for(int i = 0; i < NUM_INODES - 1 - bl; i++) {
-      fread(&vazio, sizeof(vetorInodes), 1, arquivo);
-    }
-
-    printf("POsicao2: %x - BL: %d \n", ftell(arquivo), bl);
-    int teste = fwrite(&bl, sizeof(char), 1, arquivo);
-
-    printf("POsicao2: %x - TESTE: %d \n", ftell(arquivo), teste);
-    // bl
-    fclose(arquivo);  
+    fclose(arquivo);
   }
 }
 
 void addDir(std::string fsFileName, std::string dirPath)
 {
+  FILE *arquivo = fopen(fsFileName.c_str(), "r+b");
+
+  int TAMANHO_BLOCOS;
+  int NUM_BLOCOS;
+  int NUM_INODES;
+  int MAPA_BITS;
+
+  if (arquivo == NULL)
+  {
+    // cout << "Erro ao abrir o arquivo!" << arquivo << endl;
+    system("pause");
+    exit(1);
+  }
+  else
+  {
+    char buffer[10];
+    char dir[10];
+    int posicaoInodePai = 0;
+
+    INODE vetorInodes;
+
+    fseek(arquivo, 0, SEEK_SET);
+    fread(buffer, sizeof(char), 4, arquivo);
+
+    TAMANHO_BLOCOS = buffer[0];
+    NUM_BLOCOS = buffer[1];
+    NUM_INODES = buffer[2];
+    MAPA_BITS = buffer[3];
+
+    int tamanhoMapaBits = ceil(((float)NUM_BLOCOS) / 8);
+    int tamanhoVetorBlocos = TAMANHO_BLOCOS * NUM_BLOCOS;
+    int tamanhoVetorInodes = sizeof(INODE) * NUM_INODES;
+
+    int comecaInodes = 3 + tamanhoMapaBits;
+    int comecaBlocos = 1 + comecaInodes + NUM_INODES * sizeof(vetorInodes);
+
+
+    int indiceInodeLivre;
+    int indiceBlocoPai = 0;
+
+    string inodePaiString;
+
+    // cout << "Tamanho dos Blocos:          " << TAMANHO_BLOCOS << endl;
+    // cout << "Numero de Blocos:            " << NUM_BLOCOS << endl;
+    // cout << "Numero de Inodes:            " << NUM_INODES << endl;
+    // cout << "Mapa de Bits:                " << MAPA_BITS << endl;
+    // cout << "Tamanho do Mapa de Bits:     " << tamanhoMapaBits << endl;
+    // cout << "Tamanho do vetor de blocos:  " << tamanhoVetorBlocos << endl;
+    // cout << "Tamanho do vetor de Inodes:  " << tamanhoVetorInodes << endl
+    //      << endl;
+
+    // printf("Comeca Inodes: %x \n", comecaInodes);
+    // printf("Comeca blocos: %x \n\n", comecaBlocos);
+
+    // cout << "Tamanho do Conteudo:  " << tamanhoConteudo << endl;
+    // cout << "Conteudo:             " << conteudo << endl << endl;
+
+    vector<string> stringSeparada = split(dirPath, '/');
+
+    int tamanhoArray = stringSeparada.size();
+
+    if (tamanhoArray == 1)
+    {
+      inodePaiString = '/';
+    }
+    else
+    {
+      for (int i = 0; i < tamanhoArray - 1; i++)
+      {
+        inodePaiString = stringSeparada[i];
+      }
+    }
+
+    for (int i = 0; i < NUM_INODES; i++)
+    {
+      char ativo;
+      fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+      fread(&ativo, sizeof(char), 1, arquivo);
+
+      if (ativo)
+      {
+        char valor[10];
+
+        fseek(arquivo, ftell(arquivo) + 1, SEEK_SET);
+        fread(&valor, sizeof(char), 10, arquivo);
+
+        string aux;
+        stringstream ss;
+
+        ss.str(valor);
+        aux = ss.str();
+
+        int res = aux.compare(inodePaiString);
+
+        if (res == 0)
+        {
+          posicaoInodePai = i;
+          break;
+        }
+      }
+    }
+
+    // VERIFICAÇÃO DO MAPA DE BITS, QUAL BLOCO ESTÁ LIVRE!
+    int bl = -1;
+    for (int i = 7; i >= 0; i--)
+    {
+      float depara = MAPA_BITS - pow(2.0, i);
+
+      if (depara < 0)
+      {
+        bl = i;
+      }
+      else
+      {
+        MAPA_BITS -= pow(2.0, i);
+      }
+    }
+
+    dirPath.erase(0, 1);
+
+    // INCLUSÃO do INODE
+    for (int i = 0; i < NUM_INODES; i++)
+    {
+      char valorInode;
+      fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+      fread(&valorInode, sizeof(vetorInodes), 1, arquivo);
+
+      if (!valorInode)
+      {
+        vetorInodes.IS_USED = 0x01;
+        vetorInodes.IS_DIR = 0x01;
+
+        for (int i = 0; i < 10; i++)
+        {
+          vetorInodes.NAME[i] = 0;
+        }
+
+        strcpy(vetorInodes.NAME, dirPath.c_str());
+
+        vetorInodes.SIZE = 0x00;
+
+        for (int i = 0; i < 3; i++)
+        {
+          vetorInodes.DIRECT_BLOCKS[i] = 0; // aqui eu já devo colocar os blocos diretos?
+          vetorInodes.INDIRECT_BLOCKS[i] = 0;
+          vetorInodes.DOUBLE_INDIRECT_BLOCKS[i] = 0;
+        }
+
+        fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+        fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);
+
+        indiceInodeLivre = i;
+        // cout << "LIVRE: " << indiceInodeLivre << endl;
+        break;
+      }
+    }
+
+
+    for (int i = 0; i < NUM_INODES; i++)
+    {
+      if (i == posicaoInodePai)
+      {
+        // char casting = (char) indiceInodeLivre; // cast não funciona!
+
+        fseek(arquivo, comecaInodes + i * sizeof(INODE) + 12, SEEK_SET);
+        fwrite(&indiceInodeLivre, sizeof(char), 1, arquivo);
+
+        char toInt;
+
+        // fread(&toInt, sizeof(char), 1, arquivo); // Esse meu freed está escrevendo!
+
+        // indiceBlocoPai = (int)toInt;
+      }
+
+      if(i == indiceInodeLivre) {
+        char valores[3];
+        
+        fseek(arquivo, comecaInodes + i * sizeof(INODE) + 13, SEEK_SET);
+        fread(&valores, sizeof(char), 3, arquivo);
+
+        for(int j = 0; j < 3; j++) {
+          if( (int) valores[j] == 0 ) {
+            char cast;
+            cast = (char) bl; 
+
+            fseek(arquivo, comecaInodes + i * sizeof(INODE) + 13 + j, SEEK_SET);
+            fwrite(&cast, sizeof(char), 1, arquivo);
+
+            break;
+          }
+        }
+      }
+    }
+
+    for (int i = 0; i < NUM_BLOCOS; i++) // tá errado - 6
+    {
+      for (int j = 0; j < TAMANHO_BLOCOS; j++) // - 2
+      {
+        if (i == indiceBlocoPai)
+        {
+          char ocupado;
+
+          fseek(arquivo, comecaBlocos + (TAMANHO_BLOCOS * indiceBlocoPai) + j, SEEK_SET);
+          fread(&ocupado, sizeof(vetorInodes), 1, arquivo);
+
+          int casting = (int) ocupado;
+
+          if (casting == 0)
+          {
+            char teste = (char) indiceInodeLivre;
+
+            fseek(arquivo, comecaBlocos + (TAMANHO_BLOCOS * indiceBlocoPai) + j, SEEK_SET);
+            fwrite(&teste, sizeof(char), 1, arquivo);
+          }
+        }
+      }
+    }
+
+    // int tamanhoNovoMapa = ceil(((float)tamanhoConteudo / TAMANHO_BLOCOS));
+    // int somador = 0;
+
+    // for (int i = 0; i <= tamanhoNovoMapa; i++)
+    // {
+    //   somador += pow(2.0, i);
+    // }
+
+    // char somadorCast = (char)somador;
+
+    // fseek(arquivo, 3, SEEK_SET);
+    // fwrite(&somadorCast, sizeof(char), 1, arquivo);
+
+    // int contador = 0;
+
+    // for (int i = 0; i < NUM_BLOCOS; i++)
+    // {
+    //   char ocupado;
+
+    //   fseek(arquivo, comecaBlocos + (TAMANHO_BLOCOS * i) + 2, SEEK_SET);
+    //   fread(&ocupado, sizeof(char), TAMANHO_BLOCOS, arquivo);
+
+    //   if (ocupado != 0)
+    //   {
+    //     // printf("POsicao2: %x \n", ftell(arquivo));
+    //     contador++;
+    //   }
+    // }
+
+    // for (int i = 0; i < NUM_INODES; i++)
+    // {
+    //   fseek(arquivo, comecaInodes + indiceInodeLivre * sizeof(INODE) + 13, SEEK_SET);
+
+    //   for (int j = 1; j <= contador; j++)
+    //   {
+    //     fwrite(&j, sizeof(char), 1, arquivo);
+    //   }
+    // }
+
+    // cout << "InodePaiString: "<< inodePaiString << endl;
+    // cout << "InodePaiPosition: "<< posicaoInodePai << endl;
+    // cout << "Contador: "<< contador << endl;
+
+    fclose(arquivo);
+  }
 }
 
 void remove(std::string fsFileName, std::string path)

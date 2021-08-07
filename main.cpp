@@ -116,7 +116,8 @@ int main(int argc, char **argv)
     //   testing::InitGoogleTest(&argc, argv);
     //   return RUN_ALL_TESTS();
     // initFs("fs-meu.bin", 2, 8, 6);
-    addFile("fs-meu.bin", "/teste.txt", "abc");
+    // addFile("fs-meu.bin", "/teste.txt", "abc");
+    addDir("fs-meu.bin", "/dec7556");
     return 0;
 }
 
