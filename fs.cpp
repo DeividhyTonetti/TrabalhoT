@@ -422,9 +422,9 @@ void addDir(std::string fsFileName, std::string dirPath)
     int comecaInodes = 3 + tamanhoMapaBits;
     int comecaBlocos = 1 + comecaInodes + NUM_INODES * sizeof(vetorInodes);
 
-
     int indiceInodeLivre;
     int indiceBlocoPai = 0;
+    int indiceInodeFilho = 0;
 
     string inodePaiString;
 
@@ -538,7 +538,7 @@ void addDir(std::string fsFileName, std::string dirPath)
         fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);
 
         indiceInodeLivre = i;
-        // cout << "LIVRE: " << indiceInodeLivre << endl;
+      
         break;
       }
     }
@@ -553,10 +553,9 @@ void addDir(std::string fsFileName, std::string dirPath)
         fseek(arquivo, comecaInodes + i * sizeof(INODE) + 12, SEEK_SET);
         fwrite(&indiceInodeLivre, sizeof(char), 1, arquivo);
 
-        char toInt;
-
+//PORQ?
+        // char toInt;
         // fread(&toInt, sizeof(char), 1, arquivo); // Esse meu freed está escrevendo!
-
         // indiceBlocoPai = (int)toInt;
       }
 
@@ -566,10 +565,13 @@ void addDir(std::string fsFileName, std::string dirPath)
         fseek(arquivo, comecaInodes + i * sizeof(INODE) + 13, SEEK_SET);
         fread(&valores, sizeof(char), 3, arquivo);
 
+         // Isso só considera o primeiro valor de 3, caso tenha mais filhos, não funciona;
+        
         for(int j = 0; j < 3; j++) {
           if( (int) valores[j] == 0 ) {
             char cast;
             cast = (char) bl; 
+            indiceInodeFilho = bl;
 
             fseek(arquivo, comecaInodes + i * sizeof(INODE) + 13 + j, SEEK_SET);
             fwrite(&cast, sizeof(char), 1, arquivo);
@@ -604,48 +606,35 @@ void addDir(std::string fsFileName, std::string dirPath)
       }
     }
 
-    // int tamanhoNovoMapa = ceil(((float)tamanhoConteudo / TAMANHO_BLOCOS));
-    // int somador = 0;
+    int contaInodes = 0;
 
-    // for (int i = 0; i <= tamanhoNovoMapa; i++)
-    // {
-    //   somador += pow(2.0, i);
-    // }
+    for (int i = 0; i < NUM_BLOCOS; i++) // - 2
+    {
+      char ocupado;
+      fseek(arquivo, comecaBlocos  + (i * TAMANHO_BLOCOS), SEEK_SET);
+      fread(&ocupado, TAMANHO_BLOCOS, 2, arquivo);
 
-    // char somadorCast = (char)somador;
+      if(ocupado || i == indiceInodeFilho) {
+        contaInodes++;
+      } 
+    }
+  
+    // cout << "OIS: " << contaInodes << endl;  
+   
+    int somador = 0;
 
-    // fseek(arquivo, 3, SEEK_SET);
-    // fwrite(&somadorCast, sizeof(char), 1, arquivo);
+    for (int i = 0; i < contaInodes; i++)
+    {
+      somador += pow(2.0, i);
+    }
 
-    // int contador = 0;
+//  cout << "Somador: " << somador << endl;  
+    char somadorCast = (char)somador;
 
-    // for (int i = 0; i < NUM_BLOCOS; i++)
-    // {
-    //   char ocupado;
+    fseek(arquivo, 3, SEEK_SET);
+    fwrite(&somadorCast, sizeof(char), 1, arquivo);
 
-    //   fseek(arquivo, comecaBlocos + (TAMANHO_BLOCOS * i) + 2, SEEK_SET);
-    //   fread(&ocupado, sizeof(char), TAMANHO_BLOCOS, arquivo);
-
-    //   if (ocupado != 0)
-    //   {
-    //     // printf("POsicao2: %x \n", ftell(arquivo));
-    //     contador++;
-    //   }
-    // }
-
-    // for (int i = 0; i < NUM_INODES; i++)
-    // {
-    //   fseek(arquivo, comecaInodes + indiceInodeLivre * sizeof(INODE) + 13, SEEK_SET);
-
-    //   for (int j = 1; j <= contador; j++)
-    //   {
-    //     fwrite(&j, sizeof(char), 1, arquivo);
-    //   }
-    // }
-
-    // cout << "InodePaiString: "<< inodePaiString << endl;
-    // cout << "InodePaiPosition: "<< posicaoInodePai << endl;
-    // cout << "Contador: "<< contador << endl;
+    
 
     fclose(arquivo);
   }
