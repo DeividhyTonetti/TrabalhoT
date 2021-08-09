@@ -591,7 +591,7 @@ void addDir(std::string fsFileName, std::string dirPath)
           char ocupado;
 
           fseek(arquivo, comecaBlocos + (TAMANHO_BLOCOS * indiceBlocoPai) + j, SEEK_SET);
-          fread(&ocupado, sizeof(vetorInodes), 1, arquivo);
+          fread(&ocupado, sizeof(char), 1, arquivo);
 
           int casting = (int) ocupado;
 
@@ -642,6 +642,7 @@ void addDir(std::string fsFileName, std::string dirPath)
 
 void remove(std::string fsFileName, std::string path)
 {
+
 }
 
 void move(std::string fsFileName, std::string oldPath, std::string newPath)
