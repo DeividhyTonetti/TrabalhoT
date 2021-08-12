@@ -178,6 +178,7 @@ void addFile(string fsFileName, string filePath, string fileContent)
     int indiceBlocoPai;
 
     string inodePaiString;
+    string inodeFilhoString;
 
     // cout << "Tamanho dos Blocos:          " << TAMANHO_BLOCOS << endl;
     // cout << "Numero de Blocos:            " << NUM_BLOCOS << endl;
@@ -207,6 +208,11 @@ void addFile(string fsFileName, string filePath, string fileContent)
       for (int i = 0; i < tamanhoArray - 1; i++)
       {
         inodePaiString = stringSeparada[i];
+      }
+
+      for (int i = 0; i < tamanhoArray; i++)
+      {
+        inodeFilhoString = stringSeparada[i];
       }
     }
 
@@ -268,7 +274,16 @@ void addFile(string fsFileName, string filePath, string fileContent)
         vetorInodes.IS_USED = 0x01;
         vetorInodes.IS_DIR = 0x00;
 
-        strcpy(vetorInodes.NAME, filePath.c_str());
+        for (int i = 0; i < 10; i++)
+        {
+          vetorInodes.NAME[i] = 0;
+        }
+        
+        if(inodeFilhoString.size() == 0) {
+          strcpy(vetorInodes.NAME, filePath.c_str());
+        } else {
+          strcpy(vetorInodes.NAME, inodeFilhoString.c_str());
+        }
 
         vetorInodes.SIZE = tamanhoConteudo;
 
@@ -323,7 +338,6 @@ void addFile(string fsFileName, string filePath, string fileContent)
 
           if (casting == 0)
           {
-
             fseek(arquivo, comecaBlocos + (TAMANHO_BLOCOS * indiceBlocoPai), SEEK_SET);
             fwrite(&indiceInodeLivre, sizeof(char), 1, arquivo);
           }
@@ -337,6 +351,13 @@ void addFile(string fsFileName, string filePath, string fileContent)
       }
     }
 
+  
+    // char teste[NUM_BLOCOS*t]
+    // fseek(arquivo, comecaBlocos, SEEK_SET);
+    // fwrite(&conteudo, sizeof(char), tamanhoConteudo, arquivo);
+
+
+    // funciona só para o primeiro caso
     int tamanhoNovoMapa = ceil(((float)tamanhoConteudo / TAMANHO_BLOCOS));
     int somador = 0;
 
@@ -384,7 +405,7 @@ void addFile(string fsFileName, string filePath, string fileContent)
   }
 }
 
-void addDir(std::string fsFileName, std::string dirPath)
+void addDir(string fsFileName, string dirPath)
 {
   FILE *arquivo = fopen(fsFileName.c_str(), "r+b");
 
@@ -640,9 +661,260 @@ void addDir(std::string fsFileName, std::string dirPath)
   }
 }
 
-void remove(std::string fsFileName, std::string path)
+void remove(string fsFileName, string path)
 {
+  FILE *arquivo = fopen(fsFileName.c_str(), "r+b");
 
+    int TAMANHO_BLOCOS;
+    int NUM_BLOCOS;
+    int NUM_INODES;
+    int MAPA_BITS;
+
+    if (arquivo == NULL)
+    {
+      // cout << "Erro ao abrir o arquivo!" << arquivo << endl;
+      system("pause");
+      exit(1);
+    }
+    else
+    {
+      char buffer[10];
+      char dir[10];
+      int posicaoInodePai = 0;
+
+      INODE vetorInodes;
+
+      fseek(arquivo, 0, SEEK_SET);
+      fread(buffer, sizeof(char), 4, arquivo);
+
+      TAMANHO_BLOCOS = buffer[0];
+      NUM_BLOCOS = buffer[1];
+      NUM_INODES = buffer[2];
+      MAPA_BITS = buffer[3];
+
+      int tamanhoMapaBits = ceil(((float)NUM_BLOCOS) / 8);
+      int tamanhoVetorBlocos = TAMANHO_BLOCOS * NUM_BLOCOS;
+      int tamanhoVetorInodes = sizeof(INODE) * NUM_INODES;
+
+      int comecaInodes = 3 + tamanhoMapaBits;
+      int comecaBlocos = 1 + comecaInodes + NUM_INODES * sizeof(vetorInodes);
+
+      int indiceInodeLivre;
+      int indiceBlocoPai = 0;
+      int indiceInodeFilho = 0;
+
+
+       // QUEM EU QUERO REMOVER? 
+       //  1- t2.txt
+       //  2- DEC7556
+
+       // QUEM EU TENHO QUE ALTERAR? 
+       //  1- Inode (Blocos livres)
+       //  2- Tamanho do pai -> Tamanho do pai alterado
+       //  3- Zero to Inode do filho -> Filho Zerado
+
+      string inodePaiString;
+      string inodeFilhoString;
+
+      vector<string> stringSeparada = split(path, '/');
+    
+      int tamanhoArray = stringSeparada.size();
+
+      for (int i = 0; i < tamanhoArray; i++)
+      {
+        // cout << "Separado: " << stringSeparada[i] << endl;
+        inodeFilhoString = stringSeparada[i];
+      }
+
+
+      // NO PAI EU AVALIO SE o tamanho for 1, o pai é o barra
+      if(tamanhoArray == 1) {
+        inodePaiString = '/';
+      } else {
+        for (int i = 0; i < tamanhoArray - 1; i++)
+        {
+          // cout << "Separado: " << stringSeparada[i] << endl;
+          inodePaiString = stringSeparada[i];
+        }
+
+      }
+        // cout << "PAI: " << inodePaiString << endl;
+        // cout << "FIlho: " << inodeFilhoString << endl;
+        
+      // Pego a posição do PAI
+      for (int i = 0; i < NUM_INODES; i++)
+      {
+        char ativo;
+        fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+        fread(&ativo, sizeof(char), 1, arquivo);
+
+        // Acha se está ativo
+        if (ativo)
+        {
+          char valor[10];
+
+          fseek(arquivo, ftell(arquivo) + 1, SEEK_SET);
+          fread(&valor, sizeof(char), 10, arquivo);
+
+          string aux;
+          stringstream ss;
+
+          ss.str(valor);
+          aux = ss.str();
+
+          int res = aux.compare(inodePaiString);
+
+          if (res == 0)
+          {
+            posicaoInodePai = i;
+            break;
+          }
+        }
+      }
+
+      // AGORA Já sei em que posição está o pai
+
+     // Zero o Inode filho
+      for (int i = 0; i < NUM_INODES; i++)
+      {
+        char ativo;
+        fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+        fread(&ativo, sizeof(char), 1, arquivo);
+
+        // Acha se está ativo
+        if (ativo)
+        {
+          char valor[10];
+
+          fseek(arquivo, ftell(arquivo) + 1, SEEK_SET);
+          fread(&valor, sizeof(char), 10, arquivo);
+
+          string aux;
+          stringstream ss;
+
+          ss.str(valor);
+          aux = ss.str();
+
+          int res = aux.compare(inodeFilhoString);
+
+          if (res == 0)
+          {
+
+            cout << "FILHO: " << aux << endl;
+            cout << "FILHO2: " << inodeFilhoString << endl;
+
+            vetorInodes.IS_USED = 0;
+            vetorInodes.IS_DIR = 0;
+            vetorInodes.SIZE = 0;
+          
+            for(int j = 0; j < 10; j++) 
+            {
+              vetorInodes.NAME[j] = 0;
+            }
+
+            for(int j = 0; j < 3; j++) 
+            {
+              vetorInodes.DIRECT_BLOCKS[j] = 0;
+              vetorInodes.INDIRECT_BLOCKS[j] = 0;
+              vetorInodes.DOUBLE_INDIRECT_BLOCKS[j] = 0;
+            }
+
+            fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+            printf("POsicao: %x \n", ftell(arquivo));
+            fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);
+            break;
+          }
+        }
+      }
+
+      //Altero o tamanho do pai
+
+      for (int i = 0; i < NUM_INODES; i++)
+      {
+        char ativo;
+        fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+        fread(&ativo, sizeof(char), 1, arquivo);
+
+        // Acha se está ativo
+        if (ativo)
+        {
+          char valor[10];
+
+          fseek(arquivo, ftell(arquivo) + 1, SEEK_SET);
+          fread(&valor, sizeof(char), 10, arquivo);
+
+          string aux;
+          stringstream ss;
+
+          ss.str(valor);
+          aux = ss.str();
+
+          int res = aux.compare(inodePaiString);
+
+          if (res == 0)
+          {
+
+            char tamanhoPai;
+            int cast;
+            int gravaPosicao = ftell(arquivo);
+
+            fread(&tamanhoPai, sizeof(char), 1, arquivo);
+            
+            cast = (int) tamanhoPai;
+            cout << "Tmaanho PAI: " << cast << endl;
+
+            if(cast != 0) {
+              cast--;
+              tamanhoPai = (char) cast; // NÃO Funciona o CAST
+            }
+
+            cout << "Tmaanho PAI: " << cast << endl;
+
+            fseek(arquivo, gravaPosicao, SEEK_SET);
+            printf("POsicao: %x \n", ftell(arquivo));
+            fwrite(&cast, sizeof(char), 1, arquivo);
+            break;
+          }
+        }
+      }
+
+      int ultimoBlocoSetado;
+      // Pego o ultimo Inode setado e avalio seu bloco direto
+      for (int i = 0; i < NUM_INODES; i++)
+      {
+        char ativo;
+        fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+        fread(&ativo, sizeof(char), 1, arquivo);
+
+        // Acha se está ativo
+        if (ativo)
+        {
+          char valor[3];
+
+          fseek(arquivo, comecaInodes + i * sizeof(INODE) + 13, SEEK_SET);
+          fread(&valor, sizeof(char), 3, arquivo);
+
+          for(int j = 0; j < 3; j++) {
+            if( ((int) valor[j]) != 0) {
+              ultimoBlocoSetado = (int) valor[j];
+            }
+          }   
+        }
+      }
+
+      int somador = 0;
+
+      for (int i = 0; i <= ultimoBlocoSetado; i++)
+      {
+        somador += pow(2.0, i);
+      }
+      
+      fseek(arquivo, 3, SEEK_SET);
+      fwrite(&somador, sizeof(char), 1, arquivo);
+      //  cout << "Somador:  " << somador << endl;
+
+      fclose(arquivo);
+    }
 }
 
 void move(std::string fsFileName, std::string oldPath, std::string newPath)

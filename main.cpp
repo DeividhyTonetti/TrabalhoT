@@ -39,7 +39,7 @@ using namespace std;
 //     rename("fs-case4.bin.back", "fs-case4.bin");
 // }
 
-// TEST(FsTest, case5){
+// TEST(FsTest, case5){                    // Passou
 //     duplicate("fs-case5.bin", "fs-case5.bin.back");
 
 //     addDir("fs-case5.bin", "/dec7556");
@@ -57,7 +57,7 @@ using namespace std;
 //     rename("fs-case6.bin.back", "fs-case6.bin");
 // }
 
-// TEST(FsTest, case7){
+// TEST(FsTest, case7){                    // Passou
 //     duplicate("fs-case7.bin", "fs-case7.bin.back");
 
 //     remove("fs-case7.bin", "/dec7556/t2.txt");
@@ -66,7 +66,7 @@ using namespace std;
 //     rename("fs-case7.bin.back", "fs-case7.bin");
 // }
 
-// TEST(FsTest, case8){
+// TEST(FsTest, case8){                    // Passou
 //     duplicate("fs-case8.bin", "fs-case8.bin.back");
 
 //     remove("fs-case8.bin", "/dec7556");
@@ -118,11 +118,8 @@ int main(int argc, char **argv)
     // initFs("fs-meu.bin", 2, 8, 6);
     // addFile("fs-meu.bin", "/teste.txt", "abc");
     // addDir("fs-meu.bin", "/dec7556");
-    addFile("fs-meu.bin", "/dec7556/t2.txt", "fghi");
+    // addFile("fs-meu.bin", "/dec7556/t2.txt", "fghi");
+    // remove("fs-case7.bin", "/dec7556/t2.txt");
+    // remove("fs-case8.bin", "/dec7556");
     return 0;
 }
-
-// achar inode não utilizado, então coloca os daos do inode (nome do arquivo, tamanho dele)
-// ai vai ter que encontrar os bloc( sai varendo o mapa de bit até encontrar o nulo, então seta o bit como utilizado, vai n oinode e coloca o conteudo na região de blocos)
-// precisa atualiza o pai do Inode (Vai no dir pai e incrmenta o tamanho dele, e vai na região de blocos e coloca o indice do inode que inclui no novo arquivo) 
-// Olhar o slide 3, tem um byte que é separado (como é enumerado)
