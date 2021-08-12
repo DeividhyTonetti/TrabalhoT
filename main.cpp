@@ -121,5 +121,6 @@ int main(int argc, char **argv)
     // addFile("fs-meu.bin", "/dec7556/t2.txt", "fghi");
     // remove("fs-case7.bin", "/dec7556/t2.txt");
     // remove("fs-case8.bin", "/dec7556");
+    remove("fs-case11.bin", "/a.txt");
     return 0;
 }

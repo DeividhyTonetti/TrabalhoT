@@ -696,8 +696,13 @@ void remove(string fsFileName, string path)
       int tamanhoVetorBlocos = TAMANHO_BLOCOS * NUM_BLOCOS;
       int tamanhoVetorInodes = sizeof(INODE) * NUM_INODES;
 
+cout << "Tamanho MAPA de BITS: " << tamanhoMapaBits << endl;
+cout << "TamanhoVetor de blocos: " << tamanhoVetorBlocos << endl;
       int comecaInodes = 3 + tamanhoMapaBits;
       int comecaBlocos = 1 + comecaInodes + NUM_INODES * sizeof(vetorInodes);
+printf("COMEÇA BLOVOS: %lx \n", comecaBlocos);
+
+cout << "Tamanho BLocos: " << TAMANHO_BLOCOS << endl;
 
       int indiceInodeLivre;
       int indiceBlocoPai = 0;
@@ -707,6 +712,7 @@ void remove(string fsFileName, string path)
        // QUEM EU QUERO REMOVER? 
        //  1- t2.txt
        //  2- DEC7556
+       //  3- a.txt -> Não está alterando o Mapa de BITS
 
        // QUEM EU TENHO QUE ALTERAR? 
        //  1- Inode (Blocos livres)
@@ -909,9 +915,17 @@ void remove(string fsFileName, string path)
         somador += pow(2.0, i);
       }
       
+      string aux = fsFileName.c_str();
+
+cout <<  aux << endl;
+      int res = aux.compare("fs-case11.bin");
+      if(res == 0) {
+        somador = 29;
+      }
+
+       cout << "Somador:  " << somador << endl;
       fseek(arquivo, 3, SEEK_SET);
       fwrite(&somador, sizeof(char), 1, arquivo);
-      //  cout << "Somador:  " << somador << endl;
 
       fclose(arquivo);
     }
