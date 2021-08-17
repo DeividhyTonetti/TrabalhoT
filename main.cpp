@@ -115,12 +115,12 @@ int main(int argc, char **argv)
 {
     //   testing::InitGoogleTest(&argc, argv);
     //   return RUN_ALL_TESTS();
-    // initFs("fs-meu.bin", 2, 8, 6);
-    // addFile("fs-meu.bin", "/teste.txt", "abc");
-    // addDir("fs-meu.bin", "/dec7556");
-    // addFile("fs-meu.bin", "/dec7556/t2.txt", "fghi");
-    // remove("fs-case7.bin", "/dec7556/t2.txt");
-    // remove("fs-case8.bin", "/dec7556");
-    remove("fs-case11.bin", "/a.txt");
+    // initFs("fs-meu.bin", 2, 8, 6);                   // Funciona
+    // addFile("fs-meu.bin", "/teste.txt", "abc");      // Funciona
+    // addDir("fs-meu.bin", "/dec7556");                // Funciona
+   addFile("fs-case6.bin", "/dec7556/t2.txt", "fghi");  // Não funciona
+    // remove("fs-case7.bin", "/dec7556/t2.txt");       // Funciona
+    // remove("fs-case8.bin", "/dec7556");              // Funciona
+    // remove("fs-case11.bin", "/a.txt");               // NÃO FUNCIONA
     return 0;
 }
