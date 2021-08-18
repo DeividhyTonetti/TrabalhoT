@@ -217,10 +217,6 @@ void addFile(string fsFileName, string filePath, string fileContent)
       }
     }
 
-    // JÁ sei qual é o indice PAI
-    // Já sei o nome do pai e do filho.
-    // VERIFICAÇÃO DO MAPA DE BITS, QUAL BLOCO ESTÁ LIVRE!
-
     int bl = -1;
     for (int i = 7; i >= 0; i--)
     {
@@ -243,7 +239,7 @@ void addFile(string fsFileName, string filePath, string fileContent)
     {
       char valorInode;
       fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
-      fread(&valorInode, sizeof(vetorInodes), 1, arquivo);
+      fread(&valorInode, sizeof(INODE), 1, arquivo);
 
       if (!valorInode)
       {
@@ -481,7 +477,7 @@ void addDir(string fsFileName, string dirPath)
     {
       char valorInode;
       fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
-      fread(&valorInode, sizeof(vetorInodes), 1, arquivo);
+      fread(&valorInode, sizeof(char), 1, arquivo);
 
       if (!valorInode)
       {
@@ -518,15 +514,8 @@ void addDir(string fsFileName, string dirPath)
     {
       if (i == posicaoInodePai)
       {
-        // char casting = (char) indiceInodeLivre; // cast não funciona!
-
         fseek(arquivo, comecaInodes + i * sizeof(INODE) + 12, SEEK_SET);
         fwrite(&indiceInodeLivre, sizeof(char), 1, arquivo);
-
-//PORQ?
-        // char toInt;
-        // fread(&toInt, sizeof(char), 1, arquivo); // Esse meu freed está escrevendo!
-        // indiceBlocoPai = (int)toInt;
       }
 
       if(i == indiceInodeLivre) {
@@ -535,8 +524,6 @@ void addDir(string fsFileName, string dirPath)
         fseek(arquivo, comecaInodes + i * sizeof(INODE) + 13, SEEK_SET);
         fread(&valores, sizeof(char), 3, arquivo);
 
-         // Isso só considera o primeiro valor de 3, caso tenha mais filhos, não funciona;
-        
         for(int j = 0; j < 3; j++) {
           if( (int) valores[j] == 0 ) {
             char cast;
@@ -552,9 +539,9 @@ void addDir(string fsFileName, string dirPath)
       }
     }
 
-    for (int i = 0; i < NUM_BLOCOS; i++) // tá errado - 6
+    for (int i = 0; i < NUM_BLOCOS; i++) 
     {
-      for (int j = 0; j < TAMANHO_BLOCOS; j++) // - 2
+      for (int j = 0; j < TAMANHO_BLOCOS; j++) 
       {
         if (i == indiceBlocoPai)
         {
@@ -578,7 +565,7 @@ void addDir(string fsFileName, string dirPath)
 
     int contaInodes = 0;
 
-    for (int i = 0; i < NUM_BLOCOS; i++) // - 2
+    for (int i = 0; i < NUM_BLOCOS; i++) 
     {
       char ocupado;
       fseek(arquivo, comecaBlocos  + (i * TAMANHO_BLOCOS), SEEK_SET);
