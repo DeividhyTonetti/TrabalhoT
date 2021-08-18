@@ -239,7 +239,7 @@ void addFile(string fsFileName, string filePath, string fileContent)
     {
       char valorInode;
       fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
-      fread(&valorInode, sizeof(INODE), 1, arquivo);
+      fread(&valorInode, sizeof(char), 1, arquivo);
 
       if (!valorInode)
       {
@@ -277,6 +277,8 @@ void addFile(string fsFileName, string filePath, string fileContent)
   // Altero o tamanho do pai;
     for (int i = 0; i < NUM_INODES; i++)
     {
+      cout << "Posicao Inode PAI: " << posicaoInodePai << endl;
+
       if (i == posicaoInodePai)
       {
         char tamanhoDoPai;
@@ -289,6 +291,7 @@ void addFile(string fsFileName, string filePath, string fileContent)
         } else {
           tamanhoDoPai = 1;
         }
+         cout << "Tamanho do PAI: " << (int) tamanhoDoPai<< endl;
       
         int cast = (int)tamanhoDoPai++;
 
@@ -297,6 +300,7 @@ void addFile(string fsFileName, string filePath, string fileContent)
 
         fread(&indiceBlocoPai, sizeof(char), 1, arquivo);
 
+        cout << "Indice do bloco do pai: " << (int) indiceBlocoPai << endl;
         break;
       }
     }
@@ -587,8 +591,6 @@ void addDir(string fsFileName, string dirPath)
 
     fseek(arquivo, 3, SEEK_SET);
     fwrite(&somadorCast, sizeof(char), 1, arquivo);
-
-    
 
     fclose(arquivo);
   }
