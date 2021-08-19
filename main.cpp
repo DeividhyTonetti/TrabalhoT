@@ -5,7 +5,6 @@
 
 
 #include "fs.h"
-using namespace std;
 // void duplicate(std::string fsrc, std::string fdest)
 // {
 //     std::ifstream src(fsrc, std::ios::binary);
@@ -118,9 +117,12 @@ int main(int argc, char **argv)
     // initFs("fs-meu.bin", 2, 8, 6);                   // Funciona
     // addFile("fs-meu.bin", "/teste.txt", "abc");      // Funciona
     // addDir("fs-meu.bin", "/dec7556");                // Funciona
-   addFile("fs-case6.bin", "/dec7556/t2.txt", "fghi");  // Não funciona
+    // addFile("fs-case6.bin", "/dec7556/t2.txt", "fghi");  // Funciona
     // remove("fs-case7.bin", "/dec7556/t2.txt");       // Funciona
     // remove("fs-case8.bin", "/dec7556");              // Funciona
     // remove("fs-case11.bin", "/a.txt");               // NÃO FUNCIONA
+    move("fs-case9.bin", "/dec7556/t2.txt", "/t2.txt");
+    // move("fs-case10.bin", "/teste.txt", "/dec7556/teste.txt");
+    // move("fs-case12.bin", "/b.txt", "/a.txt");
     return 0;
 }

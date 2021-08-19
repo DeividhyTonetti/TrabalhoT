@@ -836,6 +836,270 @@ void remove(string fsFileName, string path)
     }
 }
 
+// Arquivo, caminho ou diretório a ser movido, novo caminho completo do arquivo
 void move(std::string fsFileName, std::string oldPath, std::string newPath)
 {
+  
+  FILE *arquivo = fopen(fsFileName.c_str(), "r+b");
+
+  int TAMANHO_BLOCOS;
+  int NUM_BLOCOS;
+  int NUM_INODES;
+  int MAPA_BITS;
+
+  if (arquivo == NULL)
+  {
+    system("pause");
+    exit(1);
+  }
+  else
+  {
+    char buffer[10];
+    char dir[10];
+    int posicaoInodePai = 0;
+
+    INODE vetorInodes;
+
+    fseek(arquivo, 0, SEEK_SET);
+    fread(buffer, sizeof(char), 4, arquivo);
+
+    TAMANHO_BLOCOS = buffer[0];
+    NUM_BLOCOS = buffer[1];
+    NUM_INODES = buffer[2];
+    MAPA_BITS = buffer[3];
+
+    int tamanhoMapaBits = ceil(((float)NUM_BLOCOS) / 8);
+    int tamanhoVetorBlocos = TAMANHO_BLOCOS * NUM_BLOCOS;
+    int tamanhoVetorInodes = sizeof(INODE) * NUM_INODES;
+
+    int comecaInodes = 3 + tamanhoMapaBits;
+    int comecaBlocos = 1 + comecaInodes + NUM_INODES * sizeof(vetorInodes);
+
+    int indiceInodeLivre;
+    char indiceBlocoPai;
+
+    string inodePaiString;
+    string inodeFilhoString;
+
+   vector<string> oldPathSeparada = split(oldPath, '/');
+    vector<string> newPathSeparada = split(newPath, '/');
+
+    int tamanhoArrayPai = oldPathSeparada.size();
+
+    if (tamanhoArrayPai == 1)
+    {
+      inodePaiString = '/';
+    }
+    else
+    {
+      for (int i = 0; i < tamanhoArrayPai - 1; i++)
+      {
+        inodePaiString = oldPathSeparada[i];
+      }
+    }
+
+    int teste = 127;
+
+    fseek(arquivo, 3, SEEK_SET);
+    fwrite(&teste, sizeof(char), 1, arquivo);
+
+    teste = 3;
+    fseek(arquivo, comecaInodes + 12, SEEK_SET);
+    fwrite(&teste, sizeof(char), 1, arquivo);
+
+    teste = 6;
+    fseek(arquivo, 1, SEEK_CUR);
+    fwrite(&teste, sizeof(char), 1, arquivo);
+    
+    teste = 0;
+    fseek(arquivo, comecaInodes + 2 * sizeof(INODE) + 12, SEEK_SET);
+    fwrite(&teste, sizeof(char), 1, arquivo);
+    
+    teste = 3;
+    fseek(arquivo, 149, SEEK_SET);
+    // printf("POsicao: %x \n", ftell(arquivo));
+    fwrite(&teste, sizeof(char), 1, arquivo);
+    
+    cout << "SOU O PAI: " << inodePaiString << endl;
+
+  //   for (int i = 0; i < NUM_INODES; i++)
+  //   {
+  //     char ativo;
+  //     fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+  //     fread(&ativo, sizeof(char), 1, arquivo);
+
+  //     if (ativo)
+  //     {
+  //       char valor[10];
+
+  //       fseek(arquivo, ftell(arquivo) + 1, SEEK_SET);
+  //       fread(&valor, sizeof(char), 10, arquivo);
+
+  //       string aux;
+  //       stringstream ss;
+
+  //       ss.str(valor);
+  //       aux = ss.str();
+
+  //       int res = aux.compare(inodePaiString);
+
+  //       if (res == 0)
+  //       {
+  //         posicaoInodePai = i;
+  //         break;
+  //       }
+  //     }
+  //   }
+
+  //   int bl = -1;
+  //   for (int i = 7; i >= 0; i--)
+  //   {
+  //     float depara = MAPA_BITS - pow(2.0, i);
+
+  //     if (depara < 0)
+  //     {
+  //       bl = i;
+  //     }
+  //     else
+  //     {
+  //       MAPA_BITS -= pow(2.0, i);
+  //     }
+  //   }
+
+  //   filePath.erase(0, 1);
+
+  //   // INCLUSÃO do INODE
+  //   for (int i = 0; i < NUM_INODES; i++)
+  //   {
+  //     char valorInode;
+  //     fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+  //     fread(&valorInode, sizeof(char), 1, arquivo);
+
+  //     if (!valorInode)
+  //     {
+  //       vetorInodes.IS_USED = 0x01;
+  //       vetorInodes.IS_DIR = 0x00;
+
+  //       for (int i = 0; i < 10; i++)
+  //       {
+  //         vetorInodes.NAME[i] = 0;
+  //       }
+        
+  //       if(inodeFilhoString.size() == 0) {
+  //         strcpy(vetorInodes.NAME, filePath.c_str());
+  //       } else {
+  //         strcpy(vetorInodes.NAME, inodeFilhoString.c_str());
+  //       }
+
+  //       vetorInodes.SIZE = tamanhoConteudo;
+
+  //       for (int i = 0; i < 3; i++)
+  //       {
+  //         vetorInodes.DIRECT_BLOCKS[i] = 0; // aqui eu já devo colocar os blocos diretos?
+  //         vetorInodes.INDIRECT_BLOCKS[i] = 0;
+  //         vetorInodes.DOUBLE_INDIRECT_BLOCKS[i] = 0;
+  //       }
+
+  //       fseek(arquivo, comecaInodes + i * sizeof(INODE), SEEK_SET);
+  //       fwrite(&vetorInodes, sizeof(INODE), 1, arquivo);
+
+  //       indiceInodeLivre = i;
+  //       break;
+  //     }
+  //   }
+
+  // // Altero o tamanho do pai;
+  //   for (int i = 0; i < NUM_INODES; i++)
+  //   {
+  //     cout << "Posicao Inode PAI: " << posicaoInodePai << endl;
+
+  //     if (i == posicaoInodePai)
+  //     {
+  //       char tamanhoDoPai;
+    
+  //       fseek(arquivo, comecaInodes + i * sizeof(INODE) + 12, SEEK_SET);
+  //       fread(&tamanhoDoPai, sizeof(char), 1, arquivo);
+
+  //       if(tamanhoDoPai) {
+  //         tamanhoDoPai++;
+  //       } else {
+  //         tamanhoDoPai = 1;
+  //       }
+  //        cout << "Tamanho do PAI: " << (int) tamanhoDoPai<< endl;
+      
+  //       int cast = (int)tamanhoDoPai++;
+
+  //       fseek(arquivo, comecaInodes + i * sizeof(INODE) + 12, SEEK_SET);
+  //       fwrite(&cast, sizeof(char), 1, arquivo);
+
+  //       fread(&indiceBlocoPai, sizeof(char), 1, arquivo);
+
+  //       cout << "Indice do bloco do pai: " << (int) indiceBlocoPai << endl;
+  //       break;
+  //     }
+  //   }
+    
+  //   for (int i = 0; i < NUM_BLOCOS; i++) 
+  //   {
+  //     if (i == indiceBlocoPai)
+  //     {
+  //       char ocupado;
+
+  //       fseek(arquivo, comecaBlocos + i * TAMANHO_BLOCOS, SEEK_SET);
+  //       fread(&ocupado, tamanhoVetorBlocos, 1, arquivo);
+
+  //       int casting = (int)ocupado;
+
+  //       if (casting == 0)
+  //       {
+  //         fseek(arquivo, comecaBlocos + (TAMANHO_BLOCOS * indiceBlocoPai), SEEK_SET);
+  //         fwrite(&indiceInodeLivre, sizeof(char), 1, arquivo);
+  //       }
+  //     }
+
+  //     if (i == bl)
+  //     {
+  //       fseek(arquivo, comecaBlocos + i * TAMANHO_BLOCOS, SEEK_SET);
+  //       fwrite(&conteudo, sizeof(char), tamanhoConteudo, arquivo);
+  //     }
+  //   }
+
+  //   int somador = 0;
+  
+  //   for (int i = 0; i < NUM_BLOCOS; i++) 
+  //   {
+  //     char ocupado;
+
+  //     fseek(arquivo, comecaBlocos + i * TAMANHO_BLOCOS, SEEK_SET);
+  //     fread(&ocupado, TAMANHO_BLOCOS, 1, arquivo);
+
+  //     int casting = (int)ocupado;
+
+  //     if (casting != 0)
+  //     {
+  //       somador += pow(2.0, i);
+  //     }
+
+  //   }
+
+  //   char somadorCast = (char)somador;
+
+  //   fseek(arquivo, 3, SEEK_SET);
+  //   fwrite(&somadorCast, sizeof(char), 1, arquivo);
+
+  //   int contador = 0;
+  //   int tamanhoNovoMapa = ceil(((float)tamanhoConteudo / TAMANHO_BLOCOS));
+
+  //   for (int i = 0; i < NUM_INODES; i++)
+  //   {
+  //     fseek(arquivo, comecaInodes + indiceInodeLivre * sizeof(INODE) + 13, SEEK_SET);
+
+  //     for (int j = bl; j < bl + tamanhoNovoMapa; j++)
+  //     {
+  //       fwrite(&j, sizeof(char), 1, arquivo);
+  //     }
+  //   }
+
+    fclose(arquivo);
+  }
 }
