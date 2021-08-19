@@ -121,8 +121,8 @@ int main(int argc, char **argv)
     // remove("fs-case7.bin", "/dec7556/t2.txt");       // Funciona
     // remove("fs-case8.bin", "/dec7556");              // Funciona
     // remove("fs-case11.bin", "/a.txt");               // NÃO FUNCIONA
-    move("fs-case9.bin", "/dec7556/t2.txt", "/t2.txt");
+    // move("fs-case9.bin", "/dec7556/t2.txt", "/t2.txt");
     // move("fs-case10.bin", "/teste.txt", "/dec7556/teste.txt");
-    // move("fs-case12.bin", "/b.txt", "/a.txt");
+    move("fs-case12.bin", "/b.txt", "/a.txt");
     return 0;
 }
